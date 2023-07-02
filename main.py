@@ -1,4 +1,3 @@
-from typing import Optional, Tuple, Union
 from settings import *
 import threading, time, math
 import customtkinter as ctk
