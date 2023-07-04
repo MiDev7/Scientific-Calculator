@@ -36,13 +36,16 @@ class App(ctk.CTk):
         self.operation = []
         self.trigo_num = []
         self.log_num = []
-        self.num = ["9", "8", "7", "6", "5", "4", "3", "2", "1", "0"]
+        self.num = ["9", "8", "7", "6", "5", "4", "3", "2", "1", "0", "("]
         self.trigo_bool = False
+        self.log_bool = False
 
         # !-------------WIDGETS------------------------------
         Entry(self, self.result, self.formula)
+
         self.frame_normal = NumberFrame(self, self.num_press)
-        self.frame_normal.grid(column=0, row=1, sticky="nsew")
+        self.frame_scientific = ScientificFrame(self, self.num_press)
+        # testing
 
         self.option = ctk.CTkOptionMenu(
             self,
@@ -58,13 +61,13 @@ class App(ctk.CTk):
             dropdown_hover_color=DEEPBROWN,
             command=self.scientific,
         )
-        self.option.set("Normal")
 
         self.option.place(x=3, y=5)
 
         # * -----------KEY BINDING TO EXIT THE APP -------------------------
         self.bind("<Escape>", lambda _: self.quit())
         # * -----------START APP ----------------------
+        self.scientific("Normal")
         self.mainloop()
 
     def num_press(self, value):
@@ -81,8 +84,8 @@ class App(ctk.CTk):
 
             except ZeroDivisionError:
                 self.result.set("MATH ERROR")
-            self.operation.clear()
-            self.display_num.clear()
+                self.operation.clear()
+                self.display_num.clear()
             return
 
         elif value == "Del":
@@ -101,12 +104,17 @@ class App(ctk.CTk):
             if self.trigo_bool:
                 self.operation.append(")")
                 self.display(value, value)
+            else:
+                self.display(value, value)
 
         if self.option.get() == "Normal":
             self.basic_operation(value)
 
         else:
-            pass
+            self.basic_operation(value)
+            self.trigonometry_operation(value)
+            self.logarithmic_operation(value)
+            print(self.operation)
 
     def display(self, value, operation):
         self.display_num.append(value)
@@ -114,7 +122,7 @@ class App(ctk.CTk):
         self.result.set("".join(self.display_num))
 
     def basic_operation(self, value):
-        math_operation = ["+", "-", "x", "/", "x²", "√", "E"]
+        math_operation = ["+", "-", "x", "/", "x²", "√", "E", "x³", "𝛑", "x!", "^"]
         self.formula.set("")
         if value in math_operation:
             if value == "x":
@@ -132,41 +140,63 @@ class App(ctk.CTk):
             elif value == "E":
                 value = f"{value}"
                 self.display("E", "*10**")
+
+            elif value == "x³":
+                value = f"{value}"
+                self.display("³", "**3")
+            elif value == "^":
+                value = f"{value}"
+                self.display("^", "**")
+            elif value == "𝛑":
+                value = f"{value}"
+                self.display("𝛑", "math.pi")
+            elif value == "x!":
+                self.factorial_op()
+                print(self.operation)
+
             else:
                 value = f" {value} "
                 self.display(value, value)
-        else:
+
+        elif value in self.num:
             self.display(value, value)
+
+    def factorial_op(self):
+        self.last_value = self.operation[-1]
+        self.operation.pop()
+        self.display("!", "math.factorial(int(self.last_value))")
 
     def logarithmic_operation(self, value):
         log_operation = ["log", "ln"]
-
         if value in log_operation:
+            self.trigo_bool = False
+            self.log_bool = True
             if value == "log":
-                pass
+                self.display("log(", "math.log10(")
+            elif value == "ln":
+                self.display("ln(", "math.log(")
+
+        else:
+            pass
 
     def trigonometry_operation(self, value):
         trigo_operation = ["sin", "cos", "tan", "sinh", "cosh", "tanh"]
 
         if value in trigo_operation:
+            self.trigo_bool = True
             if value == "sin":
-                value = f"{value}("
-                self.display_num.append(value)
-                if not self.trigo_num:
-                    raise SyntaxError
-                else:
-                    math.sin(eval("".join(self.trigo_num)))
-
+                self.display("sin(", "math.sin(math.radians(")
             elif value == "cos":
-                value = f"{value}("
-                self.display_num.append(value)
-                self.operation.append("math.cos(")
-                self.result.set(f"sin({''.join(self.display_num)})")
+                self.display("cos(", "math.cos(math.radians(")
+            elif value == "tan":
+                self.display("tan(", "math.tan(math.radians(")
+            else:
+                pass
 
     def scientific(self, choice):
         if choice == "Scientific":
             self.frame_normal.grid_forget()
-            self.frame_scientific = ScientificFrame(self)
+            self.frame_scientific.grid(column=0, row=1, sticky="nsew")
 
         if choice == "Normal":
             self.frame_scientific.grid_forget()
@@ -256,12 +286,10 @@ class Button(ctk.CTkButton):
 
 
 class ScientificFrame(ctk.CTkFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, func):
         super().__init__(master=parent, fg_color=PRIMARY)
-        self.rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8), weight=1, uniform="d")
         self.columnconfigure((0, 1, 2, 3), weight=3, uniform="d")
-
-        self.grid(column=0, row=1, sticky="nsew")
+        self.rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8), weight=1, uniform="d")
 
         for num, data in SCIENTIFIC_BUTTON.items():
             Button(
@@ -271,6 +299,7 @@ class ScientificFrame(ctk.CTkFrame):
                 row=data["row"],
                 columnspan=data["colspan"],
                 rowspan=data["rowspan"],
+                func=func,
                 hv_color=data["hv_color"],
                 color=data["color"],
             )
