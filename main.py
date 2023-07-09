@@ -1,6 +1,9 @@
 from settings import *
-import threading, time, math
+import threading, time
+import math
 import customtkinter as ctk
+import sympy as sp
+from sympy.printing.str import StrPrinter
 
 
 class App(ctk.CTk):
@@ -29,9 +32,12 @@ class App(ctk.CTk):
 
         self.title("Calculator")
 
-        #! --------------DATA--------------------------
+        # Multithreading
+
+        #! --------------VARIABLE--------------------------
         self.formula = ctk.StringVar(value="")
         self.result = ctk.StringVar(value="0")
+        self.differentiate = ctk.StringVar(value="off")
         self.display_num = []
         self.operation = []
         self.trigo_num = []
@@ -39,7 +45,7 @@ class App(ctk.CTk):
         self.num = ["9", "8", "7", "6", "5", "4", "3", "2", "1", "0", "("]
         self.trigo_bool = False
         self.log_bool = False
-
+        self.shift = False
         # !-------------WIDGETS------------------------------
         Entry(self, self.result, self.formula)
 
@@ -56,13 +62,31 @@ class App(ctk.CTk):
             button_color=DEEPBROWN,
             button_hover_color=ACCENTBROWN,
             text_color=PRIMARY,
-            corner_radius=0,
+            corner_radius=5,
             dropdown_text_color=PRIMARY,
             dropdown_hover_color=DEEPBROWN,
             command=self.scientific,
         )
 
-        self.option.place(x=3, y=5)
+        self.option.place(relx=0.0, rely=0.0, anchor="nw")
+
+        self.diff_widget = ctk.CTkCheckBox(
+            self,
+            text="Differentiate",
+            variable=self.differentiate,
+            fg_color=ACCENTBROWN,
+            text_color=ACCENTBROWN,
+            checkbox_height=20,
+            checkbox_width=20,
+            onvalue="on",
+            offvalue="off",
+            checkmark_color=PRIMARY,
+            border_color=ACCENTBROWN,
+            hover_color=DEEPBROWN,
+            command=lambda: print(self.differentiate.get()),
+        )
+
+        self.diff_widget.place(relx=0.5, rely=0.0, anchor="ne")
 
         # * -----------KEY BINDING TO EXIT THE APP -------------------------
         self.bind("<Escape>", lambda _: self.quit())
@@ -76,18 +100,20 @@ class App(ctk.CTk):
             operation = "".join(self.operation)
             self.formula.set(result)
             print(operation)
-            try:
-                self.result.set(eval(operation))
+            if self.differentiate.get() == "off":
+                try:
+                    self.result.set(eval(operation))
 
-            except SyntaxError:
-                self.result.set("SYNTAX ERROR")
+                except SyntaxError:
+                    self.result.set("SYNTAX ERROR")
 
-            except ZeroDivisionError:
-                self.result.set("MATH ERROR")
-                self.operation.clear()
-                self.display_num.clear()
-            return
-
+                except ZeroDivisionError:
+                    self.result.set("MATH ERROR")
+                    self.operation.clear()
+                    self.display_num.clear()
+                return
+            else:
+                self.differentiation_operation(operation)
         elif value == "Del":
             self.display_num.pop()
             self.operation.pop()
@@ -122,7 +148,20 @@ class App(ctk.CTk):
         self.result.set("".join(self.display_num))
 
     def basic_operation(self, value):
-        math_operation = ["+", "-", "x", "/", "x²", "√", "E", "x³", "𝛑", "x!", "^"]
+        math_operation = [
+            "+",
+            "-",
+            "x",
+            "/",
+            "x²",
+            "√",
+            "E",
+            "x³",
+            "𝛑/x",
+            "x!",
+            "^",
+            "SHIFT",
+        ]
         self.formula.set("")
         if value in math_operation:
             if value == "x":
@@ -147,13 +186,21 @@ class App(ctk.CTk):
             elif value == "^":
                 value = f"{value}"
                 self.display("^", "**")
-            elif value == "𝛑":
-                value = f"{value}"
-                self.display("𝛑", "math.pi")
-            elif value == "x!":
-                self.factorial_op()
-                print(self.operation)
+            elif value == "𝛑/x":
+                if self.shift == False:
+                    value = f"{value}"
+                    self.display("𝛑", "math.pi")
+                elif self.shift == True:
+                    if self.differentiate.get() == "on":
+                        print("differentiate")
+                        self.display("x", "*x")
+                    elif self.differentiate.get() == "off":
+                        self.display("x", "x")
 
+            elif value == "x!":
+                self.factorial_operation()
+            elif value == "SHIFT":
+                self.shift = True
             else:
                 value = f" {value} "
                 self.display(value, value)
@@ -161,7 +208,7 @@ class App(ctk.CTk):
         elif value in self.num:
             self.display(value, value)
 
-    def factorial_op(self):
+    def factorial_operation(self):
         self.last_value = self.operation[-1]
         self.operation.pop()
         self.display("!", "math.factorial(int(self.last_value))")
@@ -175,23 +222,60 @@ class App(ctk.CTk):
                 self.display("log(", "math.log10(")
             elif value == "ln":
                 self.display("ln(", "math.log(")
-
         else:
             pass
 
+    def differentiation_operation(self, formula):
+        x = sp.Symbol("x")
+        printer = SuperscriptPrinter()
+        try:
+            formula = sp.sympify(formula)
+            derivative = sp.diff(formula, x)
+            self.display_num.clear()
+            self.operation.clear()
+            derivative_str = printer.doprint(derivative)
+            self.display(derivative_str, derivative_str)
+        except sp.SympifyError:
+            self.result.set("SYNTAX ERROR")
+
     def trigonometry_operation(self, value):
-        trigo_operation = ["sin", "cos", "tan", "sinh", "cosh", "tanh"]
+        trigo_operation = [
+            "sin/sin⁻¹",
+            "cos/cos⁻¹",
+            "tan/tan⁻¹",
+            "sinh",
+            "cosh",
+            "tanh",
+        ]
 
         if value in trigo_operation:
             self.trigo_bool = True
-            if value == "sin":
-                self.display("sin(", "math.sin(math.radians(")
-            elif value == "cos":
-                self.display("cos(", "math.cos(math.radians(")
-            elif value == "tan":
-                self.display("tan(", "math.tan(math.radians(")
+            if self.shift == False:
+                if value == "sin/sin⁻¹":
+                    self.display("sin(", "math.sin(math.radians(")
+                elif value == "cos/cos⁻¹":
+                    self.display("cos(", "math.cos(math.radians(")
+                elif value == "tan/tan⁻¹":
+                    self.display("tan(", "math.tan(math.radians(")
+                elif value == "sinh":
+                    self.trigo_bool = False
+                    self.display("sinh(", "math.sinh(")
+                elif value == "cosh":
+                    self.trigo_bool = False
+                    self.display("cosh(", "math.cosh(")
+                elif value == "tanh":
+                    self.trigo_bool = False
+                    self.display("tanh(", "math.tanh(")
+                else:
+                    pass
             else:
-                pass
+                if value == "sin/sin⁻¹":
+                    self.display("sin⁻¹(", "math.degrees(math.asin(")
+                elif value == "cos/cos⁻¹":
+                    self.display("cos⁻¹(", "math.degrees(math.acos(")
+                elif value == "tan/tan⁻¹":
+                    self.display("tan⁻¹(", "math.degrees(math.atan(")
+                self.shift = False
 
     def scientific(self, choice):
         if choice == "Scientific":
@@ -290,7 +374,6 @@ class ScientificFrame(ctk.CTkFrame):
         super().__init__(master=parent, fg_color=PRIMARY)
         self.columnconfigure((0, 1, 2, 3), weight=3, uniform="d")
         self.rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8), weight=1, uniform="d")
-
         for num, data in SCIENTIFIC_BUTTON.items():
             Button(
                 self,
@@ -303,6 +386,13 @@ class ScientificFrame(ctk.CTkFrame):
                 hv_color=data["hv_color"],
                 color=data["color"],
             )
+
+
+class SuperscriptPrinter(StrPrinter):
+    def _print_Pow(self, expr, **kwargs):
+        base = self._print(expr.base, **kwargs)
+        exponent = self._print(expr.exp, **kwargs)
+        return base + "⁽" + exponent + "⁾"
 
 
 if __name__ == "__main__":

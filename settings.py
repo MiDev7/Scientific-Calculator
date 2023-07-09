@@ -387,7 +387,7 @@ SCIENTIFIC_BUTTON = {
         "hv_color": DEEPBROWN,
         "color": ACCENTBROWN,
     },
-    "sin": {
+    "sin/sin⁻¹": {
         "row": 1,
         "col": 0,
         "colspan": 1,
@@ -395,7 +395,7 @@ SCIENTIFIC_BUTTON = {
         "hv_color": DEEPBROWN,
         "color": ACCENTBROWN,
     },
-    "cos": {
+    "cos/cos⁻¹": {
         "row": 1,
         "col": 1,
         "colspan": 1,
@@ -403,7 +403,7 @@ SCIENTIFIC_BUTTON = {
         "hv_color": DEEPBROWN,
         "color": ACCENTBROWN,
     },
-    "tan": {
+    "tan/tan⁻¹": {
         "row": 1,
         "col": 2,
         "colspan": 1,
@@ -437,7 +437,7 @@ SCIENTIFIC_BUTTON = {
         "hv_color": DEEPBROWN,
         "color": ACCENTBROWN,
     },
-    "𝛑": {
+    "𝛑/x": {
         "row": 3,
         "col": 2,
         "colspan": 1,
