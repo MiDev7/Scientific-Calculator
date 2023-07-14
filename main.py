@@ -1,11 +1,20 @@
 from settings import *
-import threading, time
-import math
+import threading
 import customtkinter as ctk
+import warnings
+from widgets import *
+
+
+import matplotlib
+
+matplotlib.use("TkAgg")
+
+# library for symbolic maths
 import sympy as sp
 from PIL import Image
-from sympy.printing.str import StrPrinter
-import tkinter as tk
+import matplotlib.pyplot as plt
+
+import numpy as np
 
 # this the function to be used to change the
 # ctk.set_appearance_mode("light")
@@ -39,10 +48,19 @@ class App(ctk.CTk):
 
         # !-----------------VARIABLE-------------
         self.history = []
-
-        #! --------------VARIABLE--------------------------
+        self.binary = ctk.StringVar(value="")
+        self.hexadecimal = ctk.StringVar(value="")
+        self.octal = ctk.StringVar(value="")
+        self.decimal = ctk.StringVar(value="")
         self.formula = ctk.StringVar(value="")
         self.result = ctk.StringVar(value="0")
+        self.kilograms = ctk.StringVar(value="0.0")
+        self.pounds = ctk.StringVar(value="0.0")
+        self.celcius = ctk.StringVar(value="0.0")
+        self.fahrenheit = ctk.StringVar(value="0.0")
+        self.metres = ctk.StringVar(value="0.0")
+        self.inches = ctk.StringVar(value="0.0")
+        self.ans = None
         self.differentiate = ctk.StringVar(value="off")
         self.display_num = []
         self.operation = []
@@ -52,13 +70,38 @@ class App(ctk.CTk):
         self.trigo_bool = False
         self.log_bool = False
         self.shift = False
+        self.shift_button = None
         # !-------------WIDGETS------------------------------
         self.entry = Entry(self, self.result, self.formula)
 
         self.frame_normal = NumberFrame(self, self.num_press)
         self.frame_scientific = ScientificFrame(self, self.num_press)
-        self.frame_programmer = Programmer(self)
-        # testing
+        self.frame_programmer = Programmer(
+            self, self.binary, self.decimal, self.hexadecimal, self.octal
+        )
+        self.frame_converter = Unit_Converter(
+            self,
+            self.kilograms,
+            self.pounds,
+            self.celcius,
+            self.fahrenheit,
+            self.metres,
+            self.inches,
+        )
+
+        # !---------------------TRACING--------------
+        self.binary.trace("w", self.binary_trace)
+        self.decimal.trace("w", self.decimal_trace)
+        self.hexadecimal.trace("w", self.hexadecimal_trace)
+        self.octal.trace("w", self.octal_trace)
+        self.kilograms.trace("w", self.kilograms_trace)
+        self.pounds.trace("w", self.pounds_trace)
+        self.celcius.trace("w", self.celcius_trace)
+        self.fahrenheit.trace("w", self.fahrenheit_trace)
+        self.metres.trace("w", self.metres_trace)
+        self.inches.trace("w", self.inches_trace)
+
+        # To add theme image
         self.image = ctk.CTkImage(
             light_image=Image.open("image/theme.png"),
             dark_image=Image.open("image/dark.png"),
@@ -76,11 +119,11 @@ class App(ctk.CTk):
             width=30,
             command=self.toggle_theme,
         )
-
+        # different Calculator options(Standard,Scientific or Programmer)
         self.theme_button.place(relx=1, rely=0.0, anchor="ne")
         self.option = ctk.CTkOptionMenu(
             self,
-            values=["Normal", "Scientific", "Programmer"],
+            values=["Normal", "Scientific", "Programmer", "Converter"],
             fg_color=GREY,
             dropdown_fg_color=GREY,
             width=100,
@@ -95,6 +138,7 @@ class App(ctk.CTk):
 
         self.option.place(relx=0.0, rely=0.0, anchor="nw")
 
+        # checkbox to toggle whether you want to differentiate or not
         self.diff_widget = ctk.CTkCheckBox(
             self,
             text="Differentiate",
@@ -119,6 +163,107 @@ class App(ctk.CTk):
         self.scientific("Normal")
         self.mainloop()
 
+    def plot_graph(self, equation):
+        x = np.linspace(-10, 10)
+        y = eval(equation)
+        plt.plot(x, y, label=equation)
+        plt.ylabel("y-axis")
+        plt.xlabel("x-axis")
+        plt.legend()
+        plt.grid()
+        try:
+            plt.show(block=True)
+        except:
+            pass
+
+    # !-----------------TRACING-------------------
+
+    # Function to trace the entry of the binary number and convert it to decimal, hexadecimal and octal
+    def binary_trace(self, *args):
+        binary = self.binary.get()
+        try:
+            bin = int(binary, 2)
+            self.decimal.set(str(bin))
+            self.hexadecimal.set(str(hex(bin)[2:]).upper())
+            self.octal.set(str(oct(bin)[2:]))
+        except:
+            pass
+
+    # Function to trace the entry of the decimal number and convert it to binary, hexadecimal and octal
+    def decimal_trace(self, *args):
+        decimal = self.decimal.get()
+        try:
+            self.binary.set(bin(int(decimal))[2:])
+            self.octal.set(oct(int(decimal))[2:])
+            self.hexadecimal.set(hex(int(decimal))[2:].upper())
+        except:
+            pass
+
+    # Function to trace the entry of the hexadecimal number and convert it to binary, decimal and octal
+    def hexadecimal_trace(self, *args):
+        hexa = self.hexadecimal.get()
+        try:
+            self.binary.set(bin(int(hexa, 16))[2:])
+            self.decimal.set(int(hexa, 16))
+            self.octal.set(oct(int(hexa, 16))[2:])
+        except:
+            pass
+
+    # Function to trace the entry of the octal number and convert it to binary, decimal and hexadecimal
+    def octal_trace(self, *args):
+        oct = self.octal.get()
+        try:
+            self.binary.set(bin(int(oct, 8))[2:])
+            self.decimal.set(int(oct, 8))
+            self.hexadecimal.set(hex(int(oct, 8))[2:].upper())
+        except:
+            pass
+
+    # Function to trace the entry of the kilograms number and convert it to pounds
+    def kilograms_trace(self, *args):
+        kilograms = self.kilograms.get()
+        try:
+            self.pounds.set(float(kilograms) * 2.20462)
+        except:
+            pass
+
+    def pounds_trace(self, *args):
+        pounds = self.pounds.get()
+        try:
+            self.kilograms.set(float(pounds) * 0.453592)
+        except:
+            pass
+
+    def celcius_trace(self, *args):
+        celcius = self.celcius.get()
+        try:
+            self.fahrenheit.set(float(celcius) * 1.8 + 32)
+        except:
+            pass
+
+    def fahrenheit_trace(self, *args):
+        fahrenheit = self.fahrenheit.get()
+        try:
+            self.celcius.set((float(fahrenheit) - 32) * 5 / 9)
+        except:
+            pass
+
+    def metres_trace(self, *args):
+        metres = self.metres.get()
+        try:
+            self.inches.set(float(metres) * 39.3701)
+        except:
+            pass
+
+    def inches_trace(self, *args):
+        inches = self.inches.get()
+        try:
+            self.metres.set(float(inches) * 0.0254)
+        except:
+            pass
+
+    # !-----------------THEME-----------------------
+    # Function to toggle the theme of the calculator
     def toggle_theme(self):
         theme = ctk.get_appearance_mode()
         print(theme)
@@ -127,6 +272,8 @@ class App(ctk.CTk):
         else:
             ctk.set_appearance_mode("light")
 
+    # !-----------------CALCULATION-------------------
+    # Function to calculate the result of the expression
     def calculate_result(self, *args):
         result = "".join(self.display_num)
         operation = "".join(self.operation)
@@ -135,7 +282,9 @@ class App(ctk.CTk):
         if self.differentiate.get() == "off":
             try:
                 result = eval(operation)
+                print(result)
                 self.result.set(str(result))
+                self.ans = self.result.get()
 
             except SyntaxError:
                 self.result.set("SYNTAX ERROR")
@@ -143,30 +292,36 @@ class App(ctk.CTk):
                 self.result.set("MATH ERROR")
         else:
             self.differentiation_operation(operation)
+            graph = threading.Thread(target=self.plot_graph, args=(operation,))
+            graph.start()
 
         self.operation.clear()
         self.display_num.clear()
 
+    # Function to get the input from the user
     def num_press(self, value):
         if value == "=":
+            # * -----------THREADING TO CALCULATE THE RESULT ----------------------
             calculation_thread = threading.Thread(
                 target=self.calculate_result, args=(self.formula, self.result)
             )
+            # * -----------START THREAD ----------------------
             calculation_thread.start()
             return
-
+        # * -----------CLEAR THE ENTRY ----------------------
         elif value == "Del":
             self.display_num.pop()
             self.operation.pop()
             self.result.set("".join(self.display_num))
             return
-
+        # * -----------CLEAR THE ENTRY ----------------------
         elif value == "AC":
             self.display_num.clear()
             self.operation.clear()
             self.result.set("")
+            self.formula.set("")
             return
-
+        # * -----------ADD THE VALUE TO THE ENTRY ----------------------
         elif value == ")":
             if self.trigo_bool:
                 self.operation.append(")")
@@ -174,6 +329,7 @@ class App(ctk.CTk):
             else:
                 self.display(value, value)
 
+        # * -----------OPERATION TOGGLE----------------------
         if self.option.get() == "Normal":
             self.basic_operation(value)
 
@@ -182,12 +338,15 @@ class App(ctk.CTk):
             self.trigonometry_operation(value)
             self.logarithmic_operation(value)
 
+    # Function to append the value to the operation and display an set the result displayed on the screen
     def display(self, value, operation):
         self.display_num.append(value)
         self.operation.append(operation)
         self.result.set("".join(self.display_num))
 
+    # Function to perform the basic operation
     def basic_operation(self, value):
+        # * -----------MATH OPERATION----------------------
         math_operation = [
             "+",
             "-",
@@ -196,18 +355,20 @@ class App(ctk.CTk):
             ".",
             "x²",
             "√",
-            "E",
-            "x³",
+            "E/Ans",
+            "x³/∛",
             "𝛑/x",
             "x!",
             "^",
             "SHIFT",
         ]
         self.formula.set("")
+        # * -----------CHECK IF THE VALUE IS IN THE MATH OPERATION----------------------
         if value in math_operation:
             if value == "x":
                 value == " x "
                 self.display(value, " * ")
+
             elif value == "√":
                 value = f"{value}"
                 self.operation.append("**0.5")
@@ -217,13 +378,20 @@ class App(ctk.CTk):
                 value = f"{value}"
                 self.display("²", "**2")
 
-            elif value == "E":
-                value = f"{value}"
-                self.display("E", "*10**")
+            elif value == "E/Ans":
+                if self.shift == False:
+                    value = f"{value}"
+                    self.display("E", "*10**")
+                else:
+                    self.display(self.ans, self.ans)
 
-            elif value == "x³":
-                value = f"{value}"
-                self.display("³", "**3")
+            elif value == "x³/∛":
+                if self.shift == False:
+                    value = f"{value}"
+                    self.display("³", "**3")
+                else:
+                    self.operation.append("**(1/3)")
+                    self.result.set(f"∛({''.join(self.display_num)})")
             elif value == ".":
                 self.display(value, value)
             elif value == "^":
@@ -244,8 +412,10 @@ class App(ctk.CTk):
                 self.factorial_operation()
             elif value == "SHIFT":
                 if self.shift == True:
+                    self.shift_button.configure(fg_color=GREY)
                     self.shift = False
                 else:
+                    self.shift_button.configure(fg_color=BLUE)
                     self.shift = True
             else:
                 value = f" {value} "
@@ -254,11 +424,16 @@ class App(ctk.CTk):
         elif value in self.num:
             self.display(value, value)
 
+    # Function to perform the factorial operation
     def factorial_operation(self):
-        self.last_value = self.operation[-1]
-        self.operation.pop()
+        value = self.operation
+        self.last_value = "".join(value)
+        print(self.last_value)
+        for i in range(len(value)):
+            self.operation.pop()
         self.display("!", "math.factorial(int(self.last_value))")
 
+    # Function to perform the logarithmic operation
     def logarithmic_operation(self, value):
         log_operation = ["log", "ln"]
         if value in log_operation:
@@ -271,6 +446,7 @@ class App(ctk.CTk):
         else:
             pass
 
+    # Function to perform the differentiation operation
     def differentiation_operation(self, formula):
         x = sp.Symbol("x")
         printer = SuperscriptPrinter()
@@ -286,6 +462,7 @@ class App(ctk.CTk):
         except sp.SympifyError:
             self.result.set("SYNTAX ERROR")
 
+    # Function to perform the trigonometric operation
     def trigonometry_operation(self, value):
         trigo_operation = [
             "sin/sin⁻¹",
@@ -295,7 +472,7 @@ class App(ctk.CTk):
             "cosh",
             "tanh",
         ]
-
+        # * -----------CHECK IF THE VALUE IS IN THE TRIGONOMETRIC OPERATION----------------------
         if value in trigo_operation:
             self.trigo_bool = True
             if self.shift == False:
@@ -325,22 +502,27 @@ class App(ctk.CTk):
                     self.display("tan⁻¹(", "math.degrees(math.atan(")
                 self.shift = False
 
+    # Function to change the calculator option
     def scientific(self, choice):
+        #
         if choice == "Scientific":
+            self.frame_converter.place_forget()
             self.diff_widget.place(relx=0.5, rely=0.0, anchor="ne")
             self.frame_normal.grid_forget()
             self.frame_programmer.place_forget()
             self.entry.grid(column=0, row=0, sticky="nsew")
             self.frame_scientific.grid(column=0, row=1, sticky="nsew")
 
-        if choice == "Normal":
+        elif choice == "Normal":
+            self.frame_converter.place_forget()
             self.diff_widget.place_forget()
             self.frame_programmer.place_forget()
             self.frame_scientific.grid_forget()
             self.entry.grid(column=0, row=0, sticky="nsew")
             self.frame_normal.grid(column=0, row=1, sticky="nsew")
 
-        if choice == "Programmer":
+        elif choice == "Programmer":
+            self.frame_converter.place_forget()
             self.diff_widget.place_forget()
             self.entry.grid_forget()
             self.frame_scientific.grid_forget()
@@ -348,140 +530,15 @@ class App(ctk.CTk):
             self.frame_programmer.place(
                 relx=0.0, rely=0.0, anchor="nw", relwidth=1, relheight=1
             )
-            Programmer(self)
-
-
-class Entry(ctk.CTkFrame):
-    def __init__(self, parent, result, formula):
-        super().__init__(master=parent, bg_color=PRIMARY, fg_color=PRIMARY)
-
-        self.grid(column=0, row=0, sticky="nsew")  # take max space in 4 directions
-
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure((0, 1), weight=1)
-
-        font2 = ctk.CTkFont(family=FONT, size=LARGE, weight="normal")
-        font1 = ctk.CTkFont(family=FONT, size=SMALL, weight="normal")
-
-        formula = ctk.CTkLabel(
-            self, text="", font=font1, textvariable=formula, text_color=WHITE
-        )
-        result = ctk.CTkLabel(
-            self, text="", font=font2, textvariable=result, text_color=WHITE
-        )
-
-        formula.grid(column=0, row=0, sticky="se", padx=10)
-        result.grid(column=0, row=1, sticky="e", padx=10)
-
-
-class NumberFrame(ctk.CTkFrame):
-    def __init__(self, parent, func):
-        super().__init__(master=parent, fg_color=PRIMARY)
-        # take max space in 4 directions
-
-        self.rowconfigure((0, 1, 2, 3, 4), weight=1, uniform="c")
-        self.columnconfigure((0, 1, 2, 3, 4), weight=1, uniform="c")
-
-        for num, data in BUTTON.items():
-            Button(
-                self,
-                text=num,
-                column=data["col"],
-                row=data["row"],
-                columnspan=data["colspan"],
-                rowspan=data["rowspan"],
-                func=func,
-                hv_color=data["hv_color"],
-                color=data["color"],
+        elif choice == "Converter":
+            self.diff_widget.place_forget()
+            self.entry.grid_forget()
+            self.frame_scientific.grid_forget()
+            self.frame_normal.grid_forget()
+            self.frame_programmer.grid_forget()
+            self.frame_converter.place(
+                relx=0.0, rely=0.0, anchor="nw", relwidth=1, relheight=1
             )
-
-
-class Button(ctk.CTkButton):
-    def __init__(
-        self,
-        parent,
-        text,
-        column,
-        row,
-        hv_color,
-        color,
-        columnspan=1,
-        rowspan=1,
-        func=lambda: print("Button pressed"),
-    ):
-        font3 = ctk.CTkFont(family=FONT, size=SMALL, weight="normal")
-        super().__init__(
-            master=parent,
-            text=text,
-            fg_color=color,
-            hover_color=hv_color,
-            text_color=WHITE,
-            font=font3,
-            command=lambda: func(text),
-        )
-
-        self.grid(
-            column=column,
-            row=row,
-            columnspan=columnspan,
-            rowspan=rowspan,
-            sticky="nsew",
-            padx=1,
-            pady=1,
-        )
-
-    # TODO: Calculator Logic
-
-
-class ScientificFrame(ctk.CTkFrame):
-    def __init__(self, parent, func):
-        super().__init__(master=parent, fg_color=PRIMARY)
-        self.columnconfigure((0, 1, 2, 3), weight=3, uniform="d")
-        self.rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8), weight=1, uniform="d")
-        for num, data in SCIENTIFIC_BUTTON.items():
-            Button(
-                self,
-                text=num,
-                column=data["col"],
-                row=data["row"],
-                columnspan=data["colspan"],
-                rowspan=data["rowspan"],
-                func=func,
-                hv_color=data["hv_color"],
-                color=data["color"],
-            )
-
-
-class Programmer(ctk.CTkFrame):
-    def __init__(self, parent):
-        super().__init__(master=parent, fg_color=PRIMARY)
-        self.configure(corner_radius=0)
-
-        # !---------------WIDGET-------------------
-        ctk.CTkLabel(self, text="Binary", text_color=WHITE).place(relx=0.5, rely=0.1, anchor="center")
-        ctk.CTkEntry(self).place(
-            relx=0.5, rely=0.15, relwidth=0.8, relheight=0.05, anchor="center"
-        )
-        ctk.CTkLabel(self, text="Decimal", text_color=WHITE).place(
-            relx=0.5, rely=0.3, anchor="center"
-        )
-
-        ctk.CTkEntry(self).place(
-            relx=0.5, rely=0.35, anchor="center", relwidth=0.8, relheight=0.05
-        )
-        ctk.CTkLabel(self, text="Hexadecimal", text_color=WHITE).place(
-            relx=0.5, rely=0.5, anchor="center"
-        )
-        ctk.CTkEntry(self).place(
-            relx=0.5, rely=0.55, relwidth=0.8, relheight=0.05, anchor="center"
-        )
-
-
-class SuperscriptPrinter(StrPrinter):
-    def _print_Pow(self, expr, **kwargs):
-        base = self._print(expr.base, **kwargs)
-        exponent = self._print(expr.exp, **kwargs)
-        return base + "⁽" + exponent + "⁾"
 
 
 if __name__ == "__main__":

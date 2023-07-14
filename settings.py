@@ -2,7 +2,8 @@
 FONT = "Roboto"
 SMALL = 20
 NORMAL = 34
-LARGE = 50
+LARGE = 55
+TITLE = 40
 
 CORNER_RADIUS = 10
 
@@ -467,7 +468,7 @@ SCIENTIFIC_BUTTON = {
         "hv_color": ACCENTGREY,
         "color": GREY,
     },
-    "x³": {
+    "x³/∛": {
         "row": 3,
         "col": 3,
         "colspan": 1,
@@ -475,68 +476,9 @@ SCIENTIFIC_BUTTON = {
         "hv_color": ACCENTGREY,
         "color": GREY,
     },
-    "E": {
+    "E/Ans": {
         "row": 8,
         "col": 2,
-        "colspan": 1,
-        "rowspan": 1,
-        "hv_color": ACCENTGREY,
-        "color": GREY,
-    },
-}
-
-SHIFT_BUTTON = {
-    "∛": {
-        "row": 3,
-        "col": 3,
-        "colspan": 1,
-        "rowspan": 1,
-        "hv_color": ACCENTGREY,
-        "color": GREY,
-    },
-    "e": {
-        "row": 0,
-        "col": 2,
-        "colspan": 1,
-        "rowspan": 1,
-        "hv_color": ACCENTGREY,
-        "color": GREY,
-    },
-    "√": {
-        "row": 2,
-        "col": 3,
-        "colspan": 1,
-        "rowspan": 1,
-        "hv_color": ACCENTGREY,
-        "color": GREY,
-    },
-    "sin-1": {
-        "row": 1,
-        "col": 0,
-        "colspan": 1,
-        "rowspan": 1,
-        "hv_color": ACCENTGREY,
-        "color": GREY,
-    },
-    "cos-1": {
-        "row": 1,
-        "col": 1,
-        "colspan": 1,
-        "rowspan": 1,
-        "hv_color": ACCENTGREY,
-        "color": GREY,
-    },
-    "tan-1": {
-        "row": 1,
-        "col": 2,
-        "colspan": 1,
-        "rowspan": 1,
-        "hv_color": ACCENTGREY,
-        "color": GREY,
-    },
-    "log x": {
-        "row": 0,
-        "col": 1,
         "colspan": 1,
         "rowspan": 1,
         "hv_color": ACCENTGREY,
