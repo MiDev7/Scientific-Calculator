@@ -3,6 +3,7 @@ import threading
 import customtkinter as ctk
 import warnings
 from widgets import *
+import math
 
 
 import matplotlib
@@ -13,7 +14,7 @@ matplotlib.use("TkAgg")
 import sympy as sp
 from PIL import Image
 import matplotlib.pyplot as plt
-
+import matplotlib.animation as animation
 import numpy as np
 
 # this the function to be used to change the
@@ -54,12 +55,12 @@ class App(ctk.CTk):
         self.decimal = ctk.StringVar(value="")
         self.formula = ctk.StringVar(value="")
         self.result = ctk.StringVar(value="0")
-        self.kilograms = ctk.StringVar(value="0.0")
-        self.pounds = ctk.StringVar(value="0.0")
-        self.celcius = ctk.StringVar(value="0.0")
-        self.fahrenheit = ctk.StringVar(value="0.0")
-        self.metres = ctk.StringVar(value="0.0")
-        self.inches = ctk.StringVar(value="0.0")
+        self.kilograms = ctk.StringVar(value="")
+        self.pounds = ctk.StringVar(value="")
+        self.celcius = ctk.StringVar(value="")
+        self.fahrenheit = ctk.StringVar(value="")
+        self.metres = ctk.StringVar(value="")
+        self.inches = ctk.StringVar(value="")
         self.ans = None
         self.differentiate = ctk.StringVar(value="off")
         self.display_num = []
@@ -71,6 +72,12 @@ class App(ctk.CTk):
         self.log_bool = False
         self.shift = False
         self.shift_button = None
+        # Add a flag to check if the calculation is in progress
+        self.calculation_in_progress = False
+
+        # Add a lock to ensure thread safety for GUI updates
+        self.gui_lock = threading.Lock()
+
         # !-------------WIDGETS------------------------------
         self.entry = Entry(self, self.result, self.formula)
 
@@ -94,12 +101,6 @@ class App(ctk.CTk):
         self.decimal.trace("w", self.decimal_trace)
         self.hexadecimal.trace("w", self.hexadecimal_trace)
         self.octal.trace("w", self.octal_trace)
-        self.kilograms.trace("w", self.kilograms_trace)
-        self.pounds.trace("w", self.pounds_trace)
-        self.celcius.trace("w", self.celcius_trace)
-        self.fahrenheit.trace("w", self.fahrenheit_trace)
-        self.metres.trace("w", self.metres_trace)
-        self.inches.trace("w", self.inches_trace)
 
         # To add theme image
         self.image = ctk.CTkImage(
@@ -119,6 +120,8 @@ class App(ctk.CTk):
             width=30,
             command=self.toggle_theme,
         )
+        self.protocol("WM_DELETE_WINDOW", self.quit)  # Close button
+
         # different Calculator options(Standard,Scientific or Programmer)
         self.theme_button.place(relx=1, rely=0.0, anchor="ne")
         self.option = ctk.CTkOptionMenu(
@@ -164,17 +167,28 @@ class App(ctk.CTk):
         self.mainloop()
 
     def plot_graph(self, equation):
+        # x = np.linspace(-10, 10)
+        # y = eval(equation)
+        # plt.plot(x, y, label=equation)
+        # plt.ylabel("y-axis")
+        # plt.xlabel("x-axis")
+        # plt.legend()
+        # plt.grid()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
         x = np.linspace(-10, 10)
         y = eval(equation)
-        plt.plot(x, y, label=equation)
-        plt.ylabel("y-axis")
-        plt.xlabel("x-axis")
-        plt.legend()
-        plt.grid()
-        try:
-            plt.show(block=True)
-        except:
-            pass
+        ax.plot(x, y, label=equation)
+        ax.set_ylabel("y-axis")
+        ax.set_xlabel("x-axis")
+        ax.legend()
+        ax.grid()
+
+        plt.show(block=True)
+
+        # Cleanup
+        plt.close(fig)
 
     # !-----------------TRACING-------------------
 
@@ -220,45 +234,62 @@ class App(ctk.CTk):
             pass
 
     # Function to trace the entry of the kilograms number and convert it to pounds
-    def kilograms_trace(self, *args):
+    def kilograms_convert(self, *args):
         kilograms = self.kilograms.get()
         try:
-            self.pounds.set(float(kilograms) * 2.20462)
+            kg_value = float(kilograms)
+            pounds = kg_value * 2.20462
+            self.pounds.set(str(pounds))
         except:
             pass
 
-    def pounds_trace(self, *args):
+    # Function to trace the entry of the pounds number and convert it to kilograms
+    def pounds_convert(self, *args):
         pounds = self.pounds.get()
         try:
-            self.kilograms.set(float(pounds) * 0.453592)
+            lb_value = float(pounds)
+            kilograms = lb_value * 0.453592
+            self.kilograms.set(str(kilograms))
         except:
             pass
 
-    def celcius_trace(self, *args):
+    # Function to trace the entry of the Celsius temperature and convert it to Fahrenheit
+    def celcius_convert(self, *args):
         celcius = self.celcius.get()
         try:
-            self.fahrenheit.set(float(celcius) * 1.8 + 32)
+            celsius_value = float(celcius)
+            fahrenheit = celsius_value * 1.8 + 32
+            self.fahrenheit.set(str(fahrenheit))
         except:
             pass
 
-    def fahrenheit_trace(self, *args):
+    # Function to trace the entry of the Fahrenheit temperature and convert it to Celsius
+    def fahrenheit_convert(self, *args):
         fahrenheit = self.fahrenheit.get()
         try:
-            self.celcius.set((float(fahrenheit) - 32) * 5 / 9)
+            fahrenheit_value = float(fahrenheit)
+            celsius = (fahrenheit_value - 32) / 1.8
+            self.celcius.set(str(celsius))
         except:
             pass
 
-    def metres_trace(self, *args):
+    # Function to trace the entry of the meters value and convert it to inches
+    def metres_convert(self, *args):
         metres = self.metres.get()
         try:
-            self.inches.set(float(metres) * 39.3701)
+            metres_value = float(metres)
+            inches = metres_value * 39.3701
+            self.inches.set(str(inches))
         except:
             pass
 
-    def inches_trace(self, *args):
+    # Function to trace the entry of the inches value and convert it to meters
+    def inches_convert(self, *args):
         inches = self.inches.get()
         try:
-            self.metres.set(float(inches) * 0.0254)
+            inches_value = float(inches)
+            metres = inches_value * 0.0254
+            self.metres.set(str(metres))
         except:
             pass
 
@@ -266,7 +297,6 @@ class App(ctk.CTk):
     # Function to toggle the theme of the calculator
     def toggle_theme(self):
         theme = ctk.get_appearance_mode()
-        print(theme)
         if theme == "Light":
             ctk.set_appearance_mode("dark")
         else:
@@ -275,33 +305,41 @@ class App(ctk.CTk):
     # !-----------------CALCULATION-------------------
     # Function to calculate the result of the expression
     def calculate_result(self, *args):
+        self.calculation_in_progress = True
         result = "".join(self.display_num)
         operation = "".join(self.operation)
         self.formula.set(result)
-        print(operation)
+
         if self.differentiate.get() == "off":
             try:
                 result = eval(operation)
-                print(result)
-                self.result.set(str(result))
+                with self.gui_lock:
+                    self.result.set(str(result))
                 self.ans = self.result.get()
-
             except SyntaxError:
-                self.result.set("SYNTAX ERROR")
-            except ZeroDivisionError:
-                self.result.set("MATH ERROR")
+                with self.gui_lock:
+                    self.result.set("SYNTAX ERROR")
+            except:
+                with self.gui_lock:
+                    self.result.set("MATH ERROR")
         else:
-            self.differentiation_operation(operation)
-            graph = threading.Thread(target=self.plot_graph, args=(operation,))
-            graph.start()
+            try:
+                self.differentiation_operation(operation)
+                graph = threading.Thread(target=self.plot_graph, args=(operation,))
+                graph.start()
+            except:
+                self.result.set("SYNTAX ERROR")
 
         self.operation.clear()
         self.display_num.clear()
+        self.calculation_in_progress = False
 
     # Function to get the input from the user
     def num_press(self, value):
         if value == "=":
             # * -----------THREADING TO CALCULATE THE RESULT ----------------------
+            if self.calculation_in_progress:
+                return
             calculation_thread = threading.Thread(
                 target=self.calculate_result, args=(self.formula, self.result)
             )
@@ -360,6 +398,7 @@ class App(ctk.CTk):
             "𝛑/x",
             "x!",
             "^",
+            "E",
             "SHIFT",
         ]
         self.formula.set("")
@@ -376,40 +415,62 @@ class App(ctk.CTk):
 
             elif value == "x²":
                 value = f"{value}"
-                self.display("²", "**2")
-
+                thread = threading.Thread(target=self.display, args=("²", "**2"))
+                thread.start()
             elif value == "E/Ans":
                 if self.shift == False:
                     value = f"{value}"
-                    self.display("E", "*10**")
+                    thread = threading.Thread(target=self.display, args=("E", "*10**"))
+                    thread.start()
                 else:
-                    self.display(self.ans, self.ans)
+                    thread = threading.Thread(
+                        target=self.display, args=(self.ans, self.ans)
+                    )
+                    thread.start()
+            elif value == "E":
+                value = f"{value}"
+                thread = threading.Thread(
+                    target=self.display,
+                    args=(
+                        value,
+                        "*10**",
+                    ),
+                )
+                thread.start()
 
             elif value == "x³/∛":
                 if self.shift == False:
                     value = f"{value}"
-                    self.display("³", "**3")
+                    thread = threading.Thread(target=self.display, args=("³", "**3"))
+                    thread.start()
                 else:
                     self.operation.append("**(1/3)")
                     self.result.set(f"∛({''.join(self.display_num)})")
             elif value == ".":
-                self.display(value, value)
+                thread = threading.Thread(target=self.display, args=(".", "."))
+                thread.start()
             elif value == "^":
                 value = f"{value}"
-                self.display("^", "**")
+                thread = threading.Thread(target=self.display, args=("^", "**"))
+                thread.start()
             elif value == "𝛑/x":
                 if self.shift == False:
                     value = f"{value}"
-                    self.display("𝛑", "math.pi")
+                    thread = threading.Thread(
+                        target=self.display, args=("𝛑", "math.pi")
+                    )
+                    thread.start()
                 elif self.shift == True:
                     if self.differentiate.get() == "on":
-                        print("differentiate")
-                        self.display("x", "*x")
+                        thread = threading.Thread(target=self.display, args=("x", "*x"))
+                        thread.start()
                     elif self.differentiate.get() == "off":
-                        self.display("x", "x")
+                        thread = threading.Thread(target=self.display, args=("x", "x"))
+                        thread.start()
 
             elif value == "x!":
-                self.factorial_operation()
+                thread = threading.Thread(target=self.factorial_operation)
+                thread.start()
             elif value == "SHIFT":
                 if self.shift == True:
                     self.shift_button.configure(fg_color=GREY)
@@ -419,10 +480,12 @@ class App(ctk.CTk):
                     self.shift = True
             else:
                 value = f" {value} "
-                self.display(value, value)
+                thread = threading.Thread(target=self.display, args=(value, value))
+                thread.start()
 
         elif value in self.num:
-            self.display(value, value)
+            thread = threading.Thread(target=self.display, args=(value, value))
+            thread.start()
 
     # Function to perform the factorial operation
     def factorial_operation(self):
@@ -431,7 +494,10 @@ class App(ctk.CTk):
         print(self.last_value)
         for i in range(len(value)):
             self.operation.pop()
-        self.display("!", "math.factorial(int(self.last_value))")
+        thread = threading.Thread(
+            target=self.display, args=("!", "math.factorial(int(self.last_value))")
+        )
+        thread.start()
 
     # Function to perform the logarithmic operation
     def logarithmic_operation(self, value):
@@ -440,9 +506,15 @@ class App(ctk.CTk):
             self.trigo_bool = False
             self.log_bool = True
             if value == "log":
-                self.display("log(", "math.log10(")
+                thread = threading.Thread(
+                    target=self.display, args=("log(", "math.log10(")
+                )
+                thread.start()
             elif value == "ln":
-                self.display("ln(", "math.log(")
+                thread = threading.Thread(
+                    target=self.display, args=("ln(", "math.log(")
+                )
+                thread.start()
         else:
             pass
 
@@ -456,7 +528,9 @@ class App(ctk.CTk):
             self.display_num.clear()
             self.operation.clear()
             derivative_str = printer.doprint(derivative)
-            self.display(derivative_str, derivative_str)
+            threading.Thread(
+                target=self.display, args=(derivative_str, derivative_str)
+            ).start()
             self.history.append(derivative_str)
 
         except sp.SympifyError:
@@ -477,30 +551,47 @@ class App(ctk.CTk):
             self.trigo_bool = True
             if self.shift == False:
                 if value == "sin/sin⁻¹":
-                    self.display("sin(", "math.sin(math.radians(")
+                    threading.Thread(
+                        target=self.display, args=("sin(", "math.sin(math.radians(")
+                    ).start()
                 elif value == "cos/cos⁻¹":
-                    self.display("cos(", "math.cos(math.radians(")
+                    threading.Thread(
+                        target=self.display, args=("cos(", "math.cos(math.radians(")
+                    ).start()
                 elif value == "tan/tan⁻¹":
-                    self.display("tan(", "math.tan(math.radians(")
+                    threading.Thread(
+                        target=self.display, args=("tan(", "math.tan(math.radians(")
+                    ).start()
                 elif value == "sinh":
                     self.trigo_bool = False
-                    self.display("sinh(", "math.sinh(")
+                    threading.Thread(
+                        target=self.display, args=("sinh(", "math.sinh(")
+                    ).start()
                 elif value == "cosh":
                     self.trigo_bool = False
-                    self.display("cosh(", "math.cosh(")
+                    threading.Thread(
+                        target=self.display, args=("cosh(", "math.cosh(")
+                    ).start()
                 elif value == "tanh":
                     self.trigo_bool = False
-                    self.display("tanh(", "math.tanh(")
+                    threading.Thread(
+                        target=self.display, args=("tanh(", "math.tanh(")
+                    ).start()
                 else:
                     pass
             else:
                 if value == "sin/sin⁻¹":
-                    self.display("sin⁻¹(", "math.degrees(math.asin(")
+                    threading.Thread(
+                        target=self.display, args=("sin⁻¹(", "math.degrees(math.asin(")
+                    ).start()
                 elif value == "cos/cos⁻¹":
-                    self.display("cos⁻¹(", "math.degrees(math.acos(")
+                    threading.Thread(
+                        target=self.display, args=("cos⁻¹(", "math.degrees(math.acos(")
+                    ).start()
                 elif value == "tan/tan⁻¹":
-                    self.display("tan⁻¹(", "math.degrees(math.atan(")
-                self.shift = False
+                    threading.Thread(
+                        target=self.display, args=("tan⁻¹(", "math.degrees(math.atan(")
+                    ).start()
 
     # Function to change the calculator option
     def scientific(self, choice):
@@ -539,6 +630,9 @@ class App(ctk.CTk):
             self.frame_converter.place(
                 relx=0.0, rely=0.0, anchor="nw", relwidth=1, relheight=1
             )
+
+    def quit(self):
+        self.destroy()
 
 
 if __name__ == "__main__":

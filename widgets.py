@@ -127,6 +127,118 @@ class Unit_Converter(ctk.CTkFrame):
         super().__init__(master=parent, fg_color=PRIMARY)
 
         # !---------------WIDGET-------------------
+        ctk.CTkLabel(
+            self, text="Weight/Mass", text_color=WHITE, font=(FONT, TITLE)
+        ).place(relx=0.5, rely=0.05, anchor="center")
+
+        # !---------------KILOGRAMS-------------------
+        ctk.CTkLabel(self, text="Kilograms", text_color=WHITE).place(
+            relx=0.5, rely=0.1, anchor="center"
+        )
+
+        ctk.CTkEntry(self, textvariable=kilograms).place(
+            relx=0.5, rely=0.15, relwidth=0.8, relheight=0.05, anchor="center"
+        )
+
+        # !---------------POUNDS-----------------
+        ctk.CTkLabel(self, text="Pounds", text_color=WHITE).place(
+            relx=0.5, rely=0.2, anchor="center"
+        )
+
+        ctk.CTkEntry(self, textvariable=pounds).place(
+            relx=0.5, rely=0.25, anchor="center", relwidth=0.8, relheight=0.05
+        )
+        # !----------------BUTTON-----------------
+        ctk.CTkButton(
+            self,
+            text="Convert to Kg",
+            fg_color=BLUE,
+            hover_color=ACCENTGREY,
+            command=parent.pounds_convert,
+        ).place(relx=0.275, rely=0.3, anchor="center", relwidth=0.35, relheight=0.04)
+
+        ctk.CTkButton(
+            self,
+            text="Convert to Lb",
+            fg_color=BLUE,
+            hover_color=ACCENTGREY,
+            command=parent.kilograms_convert,
+        ).place(relx=0.725, rely=0.3, anchor="center", relwidth=0.35, relheight=0.04)
+
+        # !---------------TEMPERATURE-------------------
+        ctk.CTkLabel(
+            self, text="Temperature", text_color=WHITE, font=(FONT, TITLE)
+        ).place(relx=0.5, rely=0.35, anchor="center")
+
+        # !---------------CELCIUS-------------------
+        ctk.CTkLabel(self, text="Celcius", text_color=WHITE).place(
+            relx=0.5, rely=0.4, anchor="center"
+        )
+
+        ctk.CTkEntry(self, textvariable=celcius).place(
+            relx=0.5, rely=0.45, relwidth=0.8, relheight=0.05, anchor="center"
+        )
+
+        # !---------------FAHRENHEIT-----------------
+        ctk.CTkLabel(self, text="Fahrenheit", text_color=WHITE).place(
+            relx=0.5, rely=0.5, anchor="center"
+        )
+
+        ctk.CTkEntry(self, textvariable=fahrenheit).place(
+            relx=0.5, rely=0.55, anchor="center", relwidth=0.8, relheight=0.05
+        )
+        # !----------------BUTTON-----------------
+        ctk.CTkButton(
+            self,
+            text="Convert to °C",
+            fg_color=BLUE,
+            hover_color=ACCENTGREY,
+            command=parent.fahrenheit_convert,
+        ).place(relx=0.275, rely=0.6, anchor="center", relwidth=0.35, relheight=0.04)
+        ctk.CTkButton(
+            self,
+            text="Convert to °F",
+            fg_color=BLUE,
+            hover_color=ACCENTGREY,
+            command=parent.celcius_convert,
+        ).place(relx=0.725, rely=0.6, anchor="center", relwidth=0.35, relheight=0.04)
+
+        # !---------------LENGTH-------------------
+        ctk.CTkLabel(self, text="Length", text_color=WHITE, font=(FONT, TITLE)).place(
+            relx=0.5, rely=0.65, anchor="center"
+        )
+        ctk.CTkLabel(self, text="Metres", text_color=WHITE).place(
+            relx=0.5, rely=0.7, anchor="center"
+        )
+
+        ctk.CTkEntry(self, textvariable=metres).place(
+            relx=0.5, rely=0.75, relwidth=0.8, relheight=0.05, anchor="center"
+        )
+
+        # !---------------INCHES-----------------
+        ctk.CTkLabel(self, text="Inches", text_color=WHITE).place(
+            relx=0.5, rely=0.8, anchor="center"
+        )
+
+        ctk.CTkEntry(self, textvariable=inches).place(
+            relx=0.5, rely=0.85, anchor="center", relwidth=0.8, relheight=0.05
+        )
+
+        # !----------------BUTTON-----------------
+        ctk.CTkButton(
+            self,
+            text="Convert to m",
+            fg_color=BLUE,
+            hover_color=ACCENTGREY,
+            command=parent.inches_convert,
+        ).place(relx=0.275, rely=0.9, anchor="center", relwidth=0.35, relheight=0.04)
+        ctk.CTkButton(
+            self,
+            text="Convert to inch",
+            fg_color=BLUE,
+            hover_color=ACCENTGREY,
+            command=parent.metres_convert,
+        ).place(relx=0.725, rely=0.9, anchor="center", relwidth=0.35, relheight=0.04)
 
 
 # Create a frame which inherit from ctkFrame to display the programmer number
