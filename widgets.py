@@ -1,6 +1,86 @@
 from settings import *
+import matplotlib
+
+matplotlib.use("TkAgg")
+from matplotlib.figure import Figure
+import matplotlib.animation as animation
 import customtkinter as ctk
 from sympy.printing.str import StrPrinter
+import warnings
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib import pyplot as plt
+import numpy as np
+
+
+# inherits from ctk.CTkToplevel, which represents a top-level window in the custom tkinter library.
+class Graph(ctk.CTkToplevel):
+    # The __init__ method is the constructor for the Graph class. It takes two arguments: parent (the parent widget) and operation (the mathematical operation to plot).
+    def __init__(self, parent, operation):
+        # The __init__ method first calls the constructor of the parent class using super().__init__(master=parent) to initialize the Graph object as a top-level window.
+        super().__init__(master=parent)
+        # Setup the title of the window and store the mathematical operation in the self.operation attribute
+        self.title("Linear Plot")
+        self.operation = operation
+
+        self.setup_plot()
+
+        # Create a navigation toolbar and pack it at the bottom of the window
+        self.toolbar = NavigationToolbar2Tk(self.fig.canvas, self)
+        self.toolbar.update()
+        self.toolbar.pack(side=ctk.BOTTOM, fill=ctk.X)
+
+        # Create a canvas to display the plot and pack it at the top of the window
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=ctk.TOP, fill=ctk.BOTH, expand=1)
+
+        # Start the animation by calling the update_plot method at regular intervals
+        self.anim = animation.FuncAnimation(self.fig, self.update_plot, interval=100)
+
+    def setup_plot(self):
+        # Configure matplotlib to use automatic figure layout
+        plt.rcParams["figure.autolayout"] = True
+
+        # Create a new figure and add a single subplot to it
+        self.fig = Figure()
+        self.ax = self.fig.add_subplot(111)
+
+        # Generate x-values using np.linspace to span from -10 to 10
+        x = np.linspace(-10, 10)
+
+        # Evaluate the mathematical operation provided in self.operation for the corresponding y-values
+        y = eval(self.operation)
+
+        # Plot the line graph with x and y values, and store the line object for later use
+        (self.line,) = self.ax.plot(x, y)
+
+        # Enable the grid on the plot
+        self.ax.grid(True)
+
+    def update_plot(self, frame):
+        try:
+            # Use warnings.catch_warnings and warnings.filterwarnings to ignore RuntimeWarnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+                # Generate x-values using np.linspace to span from -10 to 10
+                x = np.linspace(-10, 10)
+
+                # Evaluate the mathematical operation provided in self.operation for the corresponding y-values
+                y = eval(self.operation)
+
+            # Update the data of the line object with the new x and y values
+            self.line.set_data(x, y)
+
+            # Adjust the axis limits to fit the data
+            self.ax.relim()
+            self.ax.autoscale_view()
+
+            # Return the line object to indicate that the plot has been updated
+            return (self.line,)
+        except:
+            # If an exception occurs, simply pass and do nothing
+            pass
 
 
 # Create entry widget which inherit from ctkFrame to display the result and the formula
@@ -123,6 +203,7 @@ class ScientificFrame(ctk.CTkFrame):
 
 
 class Unit_Converter(ctk.CTkFrame):
+    # widgets for unit converter calculator
     def __init__(self, parent, kilograms, pounds, celcius, fahrenheit, metres, inches):
         super().__init__(master=parent, fg_color=PRIMARY)
 
@@ -225,6 +306,7 @@ class Unit_Converter(ctk.CTkFrame):
         )
 
         # !----------------BUTTON-----------------
+        # Button for conversions parts
         ctk.CTkButton(
             self,
             text="Convert to m",
@@ -286,6 +368,9 @@ class Programmer(ctk.CTkFrame):
 class SuperscriptPrinter(StrPrinter):
     # function to make derivative result prettier
     def _print_Pow(self, expr, **kwargs):
-        base = self._print(expr.base, **kwargs)
-        exponent = self._print(expr.exp, **kwargs)
-        return base + "⁽" + exponent + "⁾"
+        # Print the power expression in a formatted manner
+        base = self._print(expr.base, **kwargs)  # Get the base of the power expression
+        exponent = self._print(
+            expr.exp, **kwargs
+        )  # Get the exponent of the power expression
+        return base + "⁽" + exponent + "⁾"  # Return the formatted power expression

@@ -200,7 +200,7 @@ BUTTON = {
         "color": GREY,
     },
 }
-
+# SCIENTIFIC BUTTON
 SCIENTIFIC_BUTTON = {
     "AC": {
         "row": 0,
